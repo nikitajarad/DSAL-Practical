@@ -1,144 +1,103 @@
 #include <iostream>
 #include <stack>
-#include <string>
 using namespace std;
 
-class node
-{
+// Node structure for the expression tree
+class Node {
 public:
-    node *right;
-    node *left;
-    node *root;
     char data;
-
-    node(char data, node *left, node *right)
-    {
-        this->data = data;
-        this->left = left;
-        this->right = right;
-    }
-    node(char data)
-    {
-        this->data = data;
-    }
-
-    node()
-    {
-        root = NULL;
-    }
+    Node* left;
+    Node* right;
 };
 
-bool isOperator(char c)
-{
-    return (c == '+' || c == '-' || c == '*' || c == '/' || c == '^');
+// Function to check if a character is an operator
+bool isOperator(char c) {
+    if (c == '+' || c == '-' || c == '*' || c == '/')
+        return true;
+    return false;
 }
 
-void postorder(node *root)
-{
+// Function to construct an expression tree from a prefix expression
+Node* constructExpressionTree(string prefix) {
+    stack<Node*> stk;
+    int length = prefix.length();
+
+    // Traverse the prefix expression from right to left
+    for (int i = length - 1; i >= 0; i--) {
+        char c = prefix[i];
+
+        // If the character is an operator
+        if (isOperator(c)) {
+            Node* newNode = new Node;
+            newNode->data = c;
+            newNode->left = stk.top();
+            stk.pop();
+            newNode->right = stk.top();
+            stk.pop();
+            stk.push(newNode);
+        }
+        // If the character is an operand
+        else {
+            Node* newNode = new Node;
+            newNode->data = c;
+            newNode->left = NULL;
+            newNode->right = NULL;
+            stk.push(newNode);
+        }
+    }
+
+    // The remaining item in the stack will be the root of the expression tree
+    return stk.top();
+}
+
+// Function to traverse the expression tree using post-order traversal (non-recursive)
+void postOrderTraversal(Node* root) {
     if (root == NULL)
-    {
         return;
+
+    stack<Node*> stk1;
+    stack<Node*> stk2;
+    stk1.push(root);
+
+    // Perform post-order traversal using two stacks
+    while (!stk1.empty()) {
+        Node* temp = stk1.top();
+        stk1.pop();
+        stk2.push(temp);
+
+        if (temp->left)
+            stk1.push(temp->left);
+        if (temp->right)
+            stk1.push(temp->right);
     }
 
-    stack<node *> s;
-    node *current = root;
-    node *prev = NULL;
-
-    while (current || !s.empty())
-    {
-        if (current)
-        {
-            s.push(current);
-            current = current->left;
-        }
-        else
-        {
-            node *temp = s.top();
-
-            // If the right child exists and traversing
-            // from the left child, then move right
-            if (temp->right && temp->right != prev)
-            {
-                current = temp->right;
-            }
-            else
-            {
-                cout << temp->data << " ";
-                s.pop();
-                prev = temp;
-            }
-        }
+    // Print the elements in post-order
+    while (!stk2.empty()) {
+        Node* temp = stk2.top();
+        stk2.pop();
+        cout << temp->data << " ";
+        delete temp;
     }
 }
 
-void inorder(node *root)
-{
-    if (root == NULL)
-    {
-        return;
-    }
 
-    if (isOperator(root->data))
-    {
-        cout << "(";
-    }
 
-    inorder(root->left);
-    cout << root->data;
-    inorder(root->right);
+int main() {
+    /*string prefix;
+    cout<<"Enter prefix string:";
+    cin>>prefix;
+    */
+    string prefix = "+--a*bc/def";
+    cout<<"Given tree is ";
+    cout<<prefix;
+    // Construct the expression tree
+    Node* root = constructExpressionTree(prefix);
 
-    if (isOperator(root->data))
-    {
-        cout << ")";
-    }
-}
+    // Traverse the expression tree using post-order traversal (non-recursive)
+    cout << "\n Post-order traversal: ";
+    postOrderTraversal(root);
+    cout << endl;
 
-node *exptree(string postfix)
-{
-    if (postfix.length() == 0)
-    {
-        return NULL;
-    }
-
-    stack<node *> s;
-
-    for (char c : postfix)
-    {
-        if (isOperator(c))
-        {
-            node *x = s.top();
-            s.pop();
-
-            node *y = s.top();
-            s.pop();
-
-            node *nod = new node(c, y, x);
-
-            s.push(nod);
-        }
-        else
-        {
-            s.push(new node(c));
-        }
-    }
-
-    return s.top();
-}
-
-int main()
-{
-       //string postfix = "ab+cde+**";
-     string postfix;
-    cout << "Enter the expression:";
-    cin >> postfix;
-    node *root = exptree(postfix);
-
-    cout << "Postfix Expression: ";
-    postorder(root);
-
-    cout << "\nInfix Expression: ";
-    inorder(root);
-    cout << "\n";
 
     return 0;
 }
